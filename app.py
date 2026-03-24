@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 import joblib
 
-# Load saved model, scaler, and expected columns
+
 model = joblib.load("knn_heart_model.pkl")
 scaler = joblib.load("heart_scaler.pkl")
 expected_columns = joblib.load("heart_columns.pkl")
@@ -10,7 +10,6 @@ expected_columns = joblib.load("heart_columns.pkl")
 st.title("Heart disease Prediction ")
 st.markdown("Provide the following details to check your heart stroke risk:")
 
-# Collect user input
 age = st.slider("Age", 18, 100, 40)
 sex = st.selectbox("Sex", ["M", "F"])
 chest_pain = st.selectbox("Chest Pain Type", ["ATA", "NAP", "TA", "ASY"])
