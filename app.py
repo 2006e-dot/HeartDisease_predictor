@@ -2,52 +2,63 @@ import streamlit as st
 import pandas as pd
 import joblib
 
-model_svr = joblib.load('svr_model.pkl')
-model_features = joblib.load('model_features.pkl')
-scaler = joblib.load('scaler.pkl')
+# Load saved model, scaler, and expected columns
+model = joblib.load("knn_heart_model.pkl")
+scaler = joblib.load("heart_scaler.pkl")
+expected_columns = joblib.load("heart_columns.pkl")
 
-st.title("Insurance Charges Prediction App💵")
-st.write("Please enter the following details to predict insurance charges:")
+st.title("Heart disease Prediction ")
+st.markdown("Provide the following details to check your heart stroke risk:")
 
-input_age = st.number_input("Age", min_value=0, max_value=120, value=30)
-input_bmi = st.number_input("BMI", min_value=0.0, max_value=100.0, value=25.0)
-input_children = st.number_input("Number of Children", min_value=0, max_value=10, value=0)
-input_is_female = st.selectbox("Sex", ["Male", "Female"])
-input_is_smoker = st.selectbox("Smoker", ["Yes", "No"])
-input_region = st.selectbox("Region", ["northwest", "southeast", "southwest", "northeast"])
+# Collect user input
+age = st.slider("Age", 18, 100, 40)
+sex = st.selectbox("Sex", ["M", "F"])
+chest_pain = st.selectbox("Chest Pain Type", ["ATA", "NAP", "TA", "ASY"])
+resting_bp = st.number_input("Resting Blood Pressure (mm Hg)", 80, 200, 120)
+cholesterol = st.number_input("Cholesterol (mg/dL)", 100, 600, 200)
+fasting_bs = st.selectbox("Fasting Blood Sugar > 120 mg/dL", [0, 1])
+resting_ecg = st.selectbox("Resting ECG", ["Normal", "ST", "LVH"])
+max_hr = st.slider("Max Heart Rate", 60, 220, 150)
+exercise_angina = st.selectbox("Exercise-Induced Angina", ["Y", "N"])
+oldpeak = st.slider("Oldpeak (ST Depression)", 0.0, 6.0, 1.0)
+st_slope = st.selectbox("ST Slope", ["Up", "Flat", "Down"])
 
-if st.button("Predict Charges"):
-    
-    if input_bmi < 18.5:
-        bmi_cat = "Underweight"
-    elif 18.5 <= input_bmi < 25.0:
-        bmi_cat = "Normal"
-    elif 25.0 <= input_bmi < 30.0:
-        bmi_cat = "Overweight"
-    else:
-        bmi_cat = "Obese"
+# When Predict is clicked
+if st.button("Predict"):
 
+    # Create a raw input dictionary
     raw_input = {
-        'age': input_age,
-        'bmi': input_bmi,
-        'children': input_children,
-        'is_female': 1 if input_is_female == "Female" else 0,
-        'is_smoker': 1 if input_is_smoker == "Yes" else 0,
-        f'region_{input_region}': 1,
-        f'bmi_category_{bmi_cat}': 1
+        'Age': age,
+        'RestingBP': resting_bp,
+        'Cholesterol': cholesterol,
+        'FastingBS': fasting_bs,
+        'MaxHR': max_hr,
+        'Oldpeak': oldpeak,
+        'Sex_' + sex: 1,
+        'ChestPainType_' + chest_pain: 1,
+        'RestingECG_' + resting_ecg: 1,
+        'ExerciseAngina_' + exercise_angina: 1,
+        'ST_Slope_' + st_slope: 1
     }
 
     input_df = pd.DataFrame([raw_input])
 
-    for col in model_features:
+
+    for col in expected_columns:
         if col not in input_df.columns:
             input_df[col] = 0
 
-    input_df = input_df[model_features]
+   
+    input_df = input_df[expected_columns]
 
-    cols_to_scale = ['age', 'bmi']
-    input_df[cols_to_scale] = scaler.transform(input_df[cols_to_scale])
-
-    prediction = model_svr.predict(input_df)[0]
     
-    st.subheader(f"Predicted Insurance Charges: ${prediction:,.2f}")
+    scaled_input = scaler.transform(input_df)
+
+    
+    prediction = model.predict(scaled_input)[0]
+
+    
+    if prediction == 1:
+        st.error("⚠️ High Risk of Heart Disease")
+    else:
+        st.success("✅ Low Risk of Heart Disease")
